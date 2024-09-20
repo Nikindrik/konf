@@ -1,29 +1,31 @@
-import subprocess
+import graphviz
 import json
-from graphviz import Digraph
+import subprocess
+from Lesson_2.task_3 import get_random_color
 
-def get_python_dependencies(package_name):
-    result = subprocess.run(['pipdeptree', '--json'], capture_output=True, text=True)
-    dependencies = json.loads(result.stdout)
-    package_dependencies = [dep for dep in dependencies if dep['package']['package_name'] == package_name]
-    return package_dependencies
+def fetch_express_dependencies():
+    subprocess.run("npm view express --json > .graph_2.json", shell=True, check=True)
 
-def get_js_dependencies(package_json_path):
-    with open(package_json_path, 'r') as file:
-        package_data = json.load(file)
-    dependencies = package_data.get('dependencies', {})
-    return dependencies
+def load_dependencies(file_path):
+    with open(file_path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-def build_graph(dependencies, package_name):
-    graph = Digraph(comment=f'{package_name} dependencies')
-    for dep, version in dependencies.items():
-        graph.node(dep, f'{dep} ({version})')
-        graph.edge(package_name, dep)
-    graph.render(f'{package_name}_dependencies', format='png')
+def create_dependency_graph(dependencies):
+    dot = graphviz.Digraph('express_dependencies',
+                           graph_attr={'size': '10,10',
+                                       'rankdir': 'LR',
+                                       'nodesep': '1.0'})
+    dot.node("express", "express", color="#55FFFF", penwidth='3')
 
-matplotlib_dependencies = get_python_dependencies('matplotlib')
-matplotlib_deps = {dep['package']['package_name']: dep['package']['installed_version'] for dep in matplotlib_dependencies[0]['dependencies']}
-build_graph(matplotlib_deps, 'matplotlib')
+    for dep in dependencies.get("dependencies", {}):
+        color = get_random_color()
+        dot.node(dep, dep, color=color, penwidth='3')
+        dot.edge("express", dep, color=color, penwidth='2')
 
-express_deps = get_js_dependencies('./express/package.json')
-build_graph(express_deps, 'express')
+    dot.format = 'svg'
+    dot.render(filename="express_graph", view=True)
+    dot.save("express_graph.dot")
+
+fetch_express_dependencies()
+dependencies = load_dependencies(".graph_2.json")
+create_dependency_graph(dependencies)
