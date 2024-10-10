@@ -4,6 +4,7 @@
 
 ```
 python -m venv venv
+.\venv\Scripts\activate
 python 3.py
 python 4.py
 python 5.py
